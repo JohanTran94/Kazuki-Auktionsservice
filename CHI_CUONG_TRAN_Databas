@@ -1,0 +1,1406 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 16.4
+-- Dumped by pg_dump version 16.4
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+--
+-- Name: Kzuki Databas; Type: SCHEMA; Schema: -; Owner: postgres
+--
+
+CREATE SCHEMA "Kzuki Databas";
+
+
+ALTER SCHEMA "Kzuki Databas" OWNER TO postgres;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: auktion (Annons); Type: TABLE; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE TABLE "Kzuki Databas"."auktion (Annons)" (
+    id integer NOT NULL,
+    saljare_id integer NOT NULL,
+    starttid timestamp without time zone NOT NULL,
+    avslutat timestamp without time zone,
+    status character varying(50) NOT NULL,
+    startpris integer NOT NULL,
+    objekt_typ character varying(30) NOT NULL,
+    vinnare_id integer,
+    anteckning character varying(1000),
+    slutpris integer
+);
+
+
+ALTER TABLE "Kzuki Databas"."auktion (Annons)" OWNER TO postgres;
+
+--
+-- Name: Auktion (Annons)_auktion_id_seq; Type: SEQUENCE; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE SEQUENCE "Kzuki Databas"."Auktion (Annons)_auktion_id_seq"
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE "Kzuki Databas"."Auktion (Annons)_auktion_id_seq" OWNER TO postgres;
+
+--
+-- Name: Auktion (Annons)_auktion_id_seq; Type: SEQUENCE OWNED BY; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER SEQUENCE "Kzuki Databas"."Auktion (Annons)_auktion_id_seq" OWNED BY "Kzuki Databas"."auktion (Annons)".id;
+
+
+--
+-- Name: admin; Type: TABLE; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE TABLE "Kzuki Databas".admin (
+    id integer NOT NULL,
+    "förnamn" character varying(100) NOT NULL,
+    efternamn character varying(100) NOT NULL,
+    email character varying(100) NOT NULL,
+    telefon character varying,
+    adress integer
+);
+
+
+ALTER TABLE "Kzuki Databas".admin OWNER TO postgres;
+
+--
+-- Name: admin_admin_id_seq; Type: SEQUENCE; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE SEQUENCE "Kzuki Databas".admin_admin_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE "Kzuki Databas".admin_admin_id_seq OWNER TO postgres;
+
+--
+-- Name: admin_admin_id_seq; Type: SEQUENCE OWNED BY; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER SEQUENCE "Kzuki Databas".admin_admin_id_seq OWNED BY "Kzuki Databas".admin.id;
+
+
+--
+-- Name: adresser; Type: TABLE; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE TABLE "Kzuki Databas".adresser (
+    id integer NOT NULL,
+    gatunamn character varying(100) NOT NULL,
+    stad character varying(100) NOT NULL,
+    postnummer character varying(20) NOT NULL
+);
+
+
+ALTER TABLE "Kzuki Databas".adresser OWNER TO postgres;
+
+--
+-- Name: objekt; Type: TABLE; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE TABLE "Kzuki Databas".objekt (
+    id integer NOT NULL,
+    auktion_id integer,
+    adress_id integer NOT NULL
+);
+
+
+ALTER TABLE "Kzuki Databas".objekt OWNER TO postgres;
+
+--
+-- Name: admin_kan_se_alla_auktioner_med_status; Type: VIEW; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE VIEW "Kzuki Databas".admin_kan_se_alla_auktioner_med_status AS
+ SELECT a.id AS auktion_id,
+    o.id AS objekt_id,
+    a.objekt_typ,
+    adr.stad,
+    a.saljare_id,
+    a.starttid,
+    a.avslutat,
+    a.status,
+    a.startpris,
+    a.slutpris
+   FROM (("Kzuki Databas"."auktion (Annons)" a
+     JOIN "Kzuki Databas".objekt o ON ((a.id = o.auktion_id)))
+     JOIN "Kzuki Databas".adresser adr ON ((o.adress_id = adr.id)))
+  ORDER BY a.starttid DESC;
+
+
+ALTER VIEW "Kzuki Databas".admin_kan_se_alla_auktioner_med_status OWNER TO postgres;
+
+--
+-- Name: anvandare; Type: TABLE; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE TABLE "Kzuki Databas".anvandare (
+    id integer NOT NULL,
+    anvandarnamn character varying(100) NOT NULL,
+    losenord character varying(100) NOT NULL,
+    email character varying(100) NOT NULL,
+    regis_datum timestamp without time zone NOT NULL,
+    fornamn character varying(50) NOT NULL,
+    efternamn character varying(50) NOT NULL,
+    org_nummer character varying(20),
+    telefon character varying(20) NOT NULL,
+    adress integer NOT NULL
+);
+
+
+ALTER TABLE "Kzuki Databas".anvandare OWNER TO postgres;
+
+--
+-- Name: admin_kan_se_anvandarlistan_i_detalj; Type: VIEW; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE VIEW "Kzuki Databas".admin_kan_se_anvandarlistan_i_detalj AS
+ SELECT anv.id AS anvandare_id,
+    anv.anvandarnamn,
+    anv.email,
+    anv.regis_datum,
+    anv.fornamn,
+    anv.efternamn,
+    anv.org_nummer,
+    anv.telefon,
+    adr.gatunamn,
+    adr.stad,
+    adr.postnummer
+   FROM ("Kzuki Databas".anvandare anv
+     JOIN "Kzuki Databas".adresser adr ON ((anv.adress = adr.id)))
+  ORDER BY anv.regis_datum DESC;
+
+
+ALTER VIEW "Kzuki Databas".admin_kan_se_anvandarlistan_i_detalj OWNER TO postgres;
+
+--
+-- Name: admin_kan_se_avslutande_auktioner_utan_vinnare; Type: VIEW; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE VIEW "Kzuki Databas".admin_kan_se_avslutande_auktioner_utan_vinnare AS
+ SELECT a.id AS auktion_id,
+    o.id AS objekt_id,
+    a.objekt_typ,
+    adr.stad,
+    a.saljare_id,
+    a.starttid,
+    a.avslutat,
+    a.startpris,
+    a.slutpris
+   FROM (("Kzuki Databas"."auktion (Annons)" a
+     JOIN "Kzuki Databas".objekt o ON ((a.id = o.auktion_id)))
+     JOIN "Kzuki Databas".adresser adr ON ((o.adress_id = adr.id)))
+  WHERE ((a.status)::text = 'avslutade'::text)
+  ORDER BY a.starttid DESC;
+
+
+ALTER VIEW "Kzuki Databas".admin_kan_se_avslutande_auktioner_utan_vinnare OWNER TO postgres;
+
+--
+-- Name: adresser_adress_id_seq; Type: SEQUENCE; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE SEQUENCE "Kzuki Databas".adresser_adress_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE "Kzuki Databas".adresser_adress_id_seq OWNER TO postgres;
+
+--
+-- Name: adresser_adress_id_seq; Type: SEQUENCE OWNED BY; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER SEQUENCE "Kzuki Databas".adresser_adress_id_seq OWNED BY "Kzuki Databas".adresser.id;
+
+
+--
+-- Name: bud; Type: TABLE; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE TABLE "Kzuki Databas".bud (
+    id integer NOT NULL,
+    auktion_id integer NOT NULL,
+    budgivare_id integer,
+    bud_belopp integer,
+    bud_tid timestamp without time zone NOT NULL
+);
+
+
+ALTER TABLE "Kzuki Databas".bud OWNER TO postgres;
+
+--
+-- Name: alla_auktioner_dar_budgiavare_lagt_bud; Type: VIEW; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE VIEW "Kzuki Databas".alla_auktioner_dar_budgiavare_lagt_bud AS
+ SELECT a.id AS auktion_id,
+    a.objekt_typ,
+    adr.stad,
+    a.starttid,
+    a.avslutat,
+    a.status,
+    a.startpris,
+    a.slutpris,
+    count(b.id) AS antal_bud
+   FROM ((("Kzuki Databas"."auktion (Annons)" a
+     JOIN "Kzuki Databas".bud b ON ((a.id = b.auktion_id)))
+     JOIN "Kzuki Databas".anvandare anv ON ((b.budgivare_id = anv.id)))
+     JOIN "Kzuki Databas".adresser adr ON ((anv.adress = adr.id)))
+  WHERE (anv.id = 20)
+  GROUP BY a.id, a.objekt_typ, adr.stad, a.starttid, a.avslutat, a.status, a.startpris, a.slutpris
+  ORDER BY a.starttid DESC;
+
+
+ALTER VIEW "Kzuki Databas".alla_auktioner_dar_budgiavare_lagt_bud OWNER TO postgres;
+
+--
+-- Name: anvandare_anvandare_id_seq; Type: SEQUENCE; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE SEQUENCE "Kzuki Databas".anvandare_anvandare_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE "Kzuki Databas".anvandare_anvandare_id_seq OWNER TO postgres;
+
+--
+-- Name: anvandare_anvandare_id_seq; Type: SEQUENCE OWNED BY; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER SEQUENCE "Kzuki Databas".anvandare_anvandare_id_seq OWNED BY "Kzuki Databas".anvandare.id;
+
+
+--
+-- Name: bilder; Type: TABLE; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE TABLE "Kzuki Databas".bilder (
+    id integer NOT NULL,
+    objekt_id integer NOT NULL,
+    bild_1 character varying(300) NOT NULL,
+    bild_2 character varying(255)
+);
+
+
+ALTER TABLE "Kzuki Databas".bilder OWNER TO postgres;
+
+--
+-- Name: anvandare_filtrerar_kommande_auktioner; Type: VIEW; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE VIEW "Kzuki Databas".anvandare_filtrerar_kommande_auktioner AS
+ SELECT o.id,
+    a.objekt_typ,
+    a.status,
+    adr.stad,
+    a.starttid,
+    a.avslutat,
+    a.startpris,
+    b.bild_1
+   FROM ((("Kzuki Databas".objekt o
+     JOIN "Kzuki Databas"."auktion (Annons)" a ON ((o.auktion_id = a.id)))
+     JOIN "Kzuki Databas".adresser adr ON ((o.adress_id = adr.id)))
+     JOIN "Kzuki Databas".bilder b ON ((o.id = b.objekt_id)))
+  WHERE ((a.status)::text = 'kommande'::text)
+  ORDER BY a.starttid;
+
+
+ALTER VIEW "Kzuki Databas".anvandare_filtrerar_kommande_auktioner OWNER TO postgres;
+
+--
+-- Name: anvandare_kan_jamfora_sitt_bud_med_vinnare_bud; Type: VIEW; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE VIEW "Kzuki Databas".anvandare_kan_jamfora_sitt_bud_med_vinnare_bud AS
+ SELECT a.id AS auktion_id,
+    a.objekt_typ,
+    adr.stad,
+    a.starttid,
+    a.avslutat,
+    anv.anvandarnamn AS vinnare,
+    a.slutpris,
+    b.bud_belopp AS mitt_bud
+   FROM (((("Kzuki Databas".bud b
+     JOIN "Kzuki Databas"."auktion (Annons)" a ON ((b.auktion_id = a.id)))
+     JOIN "Kzuki Databas".objekt o ON ((a.id = o.auktion_id)))
+     JOIN "Kzuki Databas".adresser adr ON ((o.adress_id = adr.id)))
+     LEFT JOIN "Kzuki Databas".anvandare anv ON ((a.vinnare_id = anv.id)))
+  WHERE ((b.budgivare_id = 19) AND ((a.status)::text = 'avslutade'::text))
+  GROUP BY a.id, a.objekt_typ, adr.stad, a.starttid, a.avslutat, anv.anvandarnamn, a.slutpris, b.bud_belopp
+  ORDER BY a.starttid DESC;
+
+
+ALTER VIEW "Kzuki Databas".anvandare_kan_jamfora_sitt_bud_med_vinnare_bud OWNER TO postgres;
+
+--
+-- Name: anvandare_kan_se_salda_objekter; Type: VIEW; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE VIEW "Kzuki Databas".anvandare_kan_se_salda_objekter AS
+ SELECT o.id,
+    a.objekt_typ,
+    adr.stad,
+    a.starttid AS start_tid,
+    a.avslutat,
+    a.startpris,
+    a.slutpris,
+    anv.anvandarnamn AS vinnare,
+    b.bild_1
+   FROM (((("Kzuki Databas".objekt o
+     JOIN "Kzuki Databas"."auktion (Annons)" a ON ((o.auktion_id = a.id)))
+     JOIN "Kzuki Databas".adresser adr ON ((o.adress_id = adr.id)))
+     JOIN "Kzuki Databas".anvandare anv ON ((a.vinnare_id = anv.id)))
+     JOIN "Kzuki Databas".bilder b ON ((o.id = b.objekt_id)))
+  WHERE ((a.status)::text = 'avslutade'::text)
+  ORDER BY a.avslutat DESC;
+
+
+ALTER VIEW "Kzuki Databas".anvandare_kan_se_salda_objekter OWNER TO postgres;
+
+--
+-- Name: anvandare_kan_se_sina_uppgifter; Type: VIEW; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE VIEW "Kzuki Databas".anvandare_kan_se_sina_uppgifter AS
+ SELECT anv.id AS anvandare_id,
+    anv.anvandarnamn,
+    anv.losenord,
+    anv.email,
+    anv.regis_datum,
+    anv.fornamn,
+    anv.efternamn,
+    anv.org_nummer,
+    anv.telefon,
+    adr.gatunamn,
+    adr.stad,
+    adr.postnummer
+   FROM ("Kzuki Databas".anvandare anv
+     JOIN "Kzuki Databas".adresser adr ON ((anv.adress = adr.id)))
+  WHERE (anv.id = 20);
+
+
+ALTER VIEW "Kzuki Databas".anvandare_kan_se_sina_uppgifter OWNER TO postgres;
+
+--
+-- Name: anvandare_kan_se_vem_ar_vinnare; Type: VIEW; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE VIEW "Kzuki Databas".anvandare_kan_se_vem_ar_vinnare AS
+ SELECT a.id AS auktion_id,
+    anv.anvandarnamn AS vinnare
+   FROM ("Kzuki Databas"."auktion (Annons)" a
+     JOIN "Kzuki Databas".anvandare anv ON ((a.vinnare_id = anv.id)))
+  WHERE (a.id = 1);
+
+
+ALTER VIEW "Kzuki Databas".anvandare_kan_se_vem_ar_vinnare OWNER TO postgres;
+
+--
+-- Name: avandare_kan_se_alla_sina_vinnande_auktioner; Type: VIEW; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE VIEW "Kzuki Databas".avandare_kan_se_alla_sina_vinnande_auktioner AS
+ SELECT a.id AS auktion_id,
+    o.id AS objekt_id,
+    a.objekt_typ,
+    adr.stad,
+    a.starttid,
+    a.avslutat,
+    a.status,
+    a.startpris,
+    a.slutpris,
+    bi.bild_1
+   FROM (((("Kzuki Databas"."auktion (Annons)" a
+     JOIN "Kzuki Databas".anvandare anv ON ((a.vinnare_id = anv.id)))
+     JOIN "Kzuki Databas".adresser adr ON ((anv.adress = adr.id)))
+     JOIN "Kzuki Databas".objekt o ON ((a.id = o.auktion_id)))
+     JOIN "Kzuki Databas".bilder bi ON ((o.id = bi.objekt_id)))
+  WHERE (anv.id = 27);
+
+
+ALTER VIEW "Kzuki Databas".avandare_kan_se_alla_sina_vinnande_auktioner OWNER TO postgres;
+
+--
+-- Name: bilder_id_seq; Type: SEQUENCE; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE SEQUENCE "Kzuki Databas".bilder_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE "Kzuki Databas".bilder_id_seq OWNER TO postgres;
+
+--
+-- Name: bilder_id_seq; Type: SEQUENCE OWNED BY; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER SEQUENCE "Kzuki Databas".bilder_id_seq OWNED BY "Kzuki Databas".bilder.id;
+
+
+--
+-- Name: bud_bud_id_seq; Type: SEQUENCE; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE SEQUENCE "Kzuki Databas".bud_bud_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE "Kzuki Databas".bud_bud_id_seq OWNER TO postgres;
+
+--
+-- Name: bud_bud_id_seq; Type: SEQUENCE OWNED BY; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER SEQUENCE "Kzuki Databas".bud_bud_id_seq OWNED BY "Kzuki Databas".bud.id;
+
+
+--
+-- Name: legenhet; Type: TABLE; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE TABLE "Kzuki Databas".legenhet (
+    id integer NOT NULL,
+    manad_avgift integer NOT NULL,
+    antal_rum numeric,
+    hiss integer NOT NULL,
+    balkong integer NOT NULL,
+    "våning" integer NOT NULL,
+    badkar integer NOT NULL,
+    "byggnad_år" date NOT NULL,
+    boarea numeric NOT NULL,
+    objekt_id integer NOT NULL
+);
+
+
+ALTER TABLE "Kzuki Databas".legenhet OWNER TO postgres;
+
+--
+-- Name: budgivare_filtrerar_lagenheter_med_hiss_i_stockholm_norrkoping; Type: VIEW; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE VIEW "Kzuki Databas".budgivare_filtrerar_lagenheter_med_hiss_i_stockholm_norrkoping AS
+ SELECT o.id,
+    a.objekt_typ,
+    a.status,
+    adr.gatunamn,
+    adr.stad,
+    adr.postnummer,
+    a.starttid,
+    a.avslutat,
+    a.startpris,
+    l.hiss,
+    b.bild_1
+   FROM (((("Kzuki Databas".objekt o
+     JOIN "Kzuki Databas"."auktion (Annons)" a ON ((o.auktion_id = a.id)))
+     JOIN "Kzuki Databas".adresser adr ON ((o.adress_id = adr.id)))
+     JOIN "Kzuki Databas".legenhet l ON ((o.id = l.objekt_id)))
+     JOIN "Kzuki Databas".bilder b ON ((o.id = b.objekt_id)))
+  WHERE (((a.status)::text = 'pågående'::text) AND ((a.objekt_typ)::text = 'lägenhet'::text) AND (l.hiss = 1) AND ((adr.stad)::text = ANY ((ARRAY['Stockholm'::character varying, 'Norrköping'::character varying])::text[])))
+  ORDER BY a.starttid;
+
+
+ALTER VIEW "Kzuki Databas".budgivare_filtrerar_lagenheter_med_hiss_i_stockholm_norrkoping OWNER TO postgres;
+
+--
+-- Name: budgivare_kan_se_budhistorik; Type: VIEW; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE VIEW "Kzuki Databas".budgivare_kan_se_budhistorik AS
+ SELECT a.id AS auktion_id,
+    o.id AS objekt_id,
+    a.objekt_typ,
+    a.status,
+    anv.anvandarnamn AS budgivare,
+    b.bud_belopp,
+    b.bud_tid
+   FROM ((("Kzuki Databas".objekt o
+     JOIN "Kzuki Databas"."auktion (Annons)" a ON ((o.auktion_id = a.id)))
+     JOIN "Kzuki Databas".bud b ON ((a.id = b.auktion_id)))
+     JOIN "Kzuki Databas".anvandare anv ON ((b.budgivare_id = anv.id)))
+  WHERE (a.id = 3)
+  ORDER BY b.bud_tid DESC;
+
+
+ALTER VIEW "Kzuki Databas".budgivare_kan_se_budhistorik OWNER TO postgres;
+
+--
+-- Name: bugivare_kan_se_sin_antal_bud_på_en_auktion; Type: VIEW; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE VIEW "Kzuki Databas"."bugivare_kan_se_sin_antal_bud_på_en_auktion" AS
+ SELECT a.id AS auktion_id,
+    count(b.id) AS min_antal_bud
+   FROM (("Kzuki Databas".bud b
+     JOIN "Kzuki Databas"."auktion (Annons)" a ON ((b.auktion_id = a.id)))
+     JOIN "Kzuki Databas"."auktion (Annons)" ON ((b.auktion_id = "auktion (Annons)".id)))
+  WHERE ((b.auktion_id = 1) AND (b.budgivare_id = 5))
+  GROUP BY a.id;
+
+
+ALTER VIEW "Kzuki Databas"."bugivare_kan_se_sin_antal_bud_på_en_auktion" OWNER TO postgres;
+
+--
+-- Name: legenhet_legenhet_id_seq; Type: SEQUENCE; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE SEQUENCE "Kzuki Databas".legenhet_legenhet_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE "Kzuki Databas".legenhet_legenhet_id_seq OWNER TO postgres;
+
+--
+-- Name: legenhet_legenhet_id_seq; Type: SEQUENCE OWNED BY; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER SEQUENCE "Kzuki Databas".legenhet_legenhet_id_seq OWNED BY "Kzuki Databas".legenhet.id;
+
+
+--
+-- Name: objekt_objekt_id_seq; Type: SEQUENCE; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE SEQUENCE "Kzuki Databas".objekt_objekt_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE "Kzuki Databas".objekt_objekt_id_seq OWNER TO postgres;
+
+--
+-- Name: objekt_objekt_id_seq; Type: SEQUENCE OWNED BY; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER SEQUENCE "Kzuki Databas".objekt_objekt_id_seq OWNED BY "Kzuki Databas".objekt.id;
+
+
+--
+-- Name: saljare_kan_se_sina_auktioner; Type: VIEW; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE VIEW "Kzuki Databas".saljare_kan_se_sina_auktioner AS
+ SELECT a.id AS auktion_id,
+    anv.anvandarnamn AS vinnare,
+    a.objekt_typ,
+    a.status,
+    adr.stad,
+    a.starttid,
+    a.avslutat,
+    a.startpris,
+    a.slutpris,
+    count(b.budgivare_id) AS antal_bud
+   FROM (((("Kzuki Databas"."auktion (Annons)" a
+     JOIN "Kzuki Databas".objekt o ON ((a.id = o.auktion_id)))
+     JOIN "Kzuki Databas".adresser adr ON ((o.adress_id = adr.id)))
+     JOIN "Kzuki Databas".bud b ON ((a.id = b.auktion_id)))
+     JOIN "Kzuki Databas".anvandare anv ON ((a.vinnare_id = anv.id)))
+  WHERE (a.saljare_id = 2)
+  GROUP BY a.id, a.objekt_typ, a.status, adr.stad, a.starttid, a.avslutat, a.startpris, a.slutpris, anv.anvandarnamn;
+
+
+ALTER VIEW "Kzuki Databas".saljare_kan_se_sina_auktioner OWNER TO postgres;
+
+--
+-- Name: saljare_kan_se_statistik_avslutade_auktioner; Type: VIEW; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE VIEW "Kzuki Databas".saljare_kan_se_statistik_avslutade_auktioner AS
+ SELECT a.id AS auktion_id,
+    a.starttid,
+    a.avslutat,
+    a.status,
+    a.startpris,
+    a.slutpris,
+    count(b.id) AS antal_bud
+   FROM (("Kzuki Databas"."auktion (Annons)" a
+     LEFT JOIN "Kzuki Databas".bud b ON ((a.id = b.auktion_id)))
+     JOIN "Kzuki Databas".anvandare anv ON ((a.saljare_id = anv.id)))
+  WHERE ((anv.id = 13) AND ((a.status)::text = 'avslutade'::text))
+  GROUP BY a.id, a.starttid, a.avslutat, a.status, a.startpris, a.slutpris
+  ORDER BY a.starttid DESC;
+
+
+ALTER VIEW "Kzuki Databas".saljare_kan_se_statistik_avslutade_auktioner OWNER TO postgres;
+
+--
+-- Name: tomt; Type: TABLE; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE TABLE "Kzuki Databas".tomt (
+    id integer NOT NULL,
+    manad_avgift integer NOT NULL,
+    objekt_id integer NOT NULL
+);
+
+
+ALTER TABLE "Kzuki Databas".tomt OWNER TO postgres;
+
+--
+-- Name: tomt_tomt_id_seq; Type: SEQUENCE; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE SEQUENCE "Kzuki Databas".tomt_tomt_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE "Kzuki Databas".tomt_tomt_id_seq OWNER TO postgres;
+
+--
+-- Name: tomt_tomt_id_seq; Type: SEQUENCE OWNED BY; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER SEQUENCE "Kzuki Databas".tomt_tomt_id_seq OWNED BY "Kzuki Databas".tomt.id;
+
+
+--
+-- Name: villa; Type: TABLE; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE TABLE "Kzuki Databas".villa (
+    id integer NOT NULL,
+    antal_rum numeric NOT NULL,
+    tomtarea numeric NOT NULL,
+    badkar integer,
+    byggnad_ar date NOT NULL,
+    boarea numeric NOT NULL,
+    objekt_id integer NOT NULL
+);
+
+
+ALTER TABLE "Kzuki Databas".villa OWNER TO postgres;
+
+--
+-- Name: villa_villa_id_seq; Type: SEQUENCE; Schema: Kzuki Databas; Owner: postgres
+--
+
+CREATE SEQUENCE "Kzuki Databas".villa_villa_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER SEQUENCE "Kzuki Databas".villa_villa_id_seq OWNER TO postgres;
+
+--
+-- Name: villa_villa_id_seq; Type: SEQUENCE OWNED BY; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER SEQUENCE "Kzuki Databas".villa_villa_id_seq OWNED BY "Kzuki Databas".villa.id;
+
+
+--
+-- Name: admin id; Type: DEFAULT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".admin ALTER COLUMN id SET DEFAULT nextval('"Kzuki Databas".admin_admin_id_seq'::regclass);
+
+
+--
+-- Name: adresser id; Type: DEFAULT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".adresser ALTER COLUMN id SET DEFAULT nextval('"Kzuki Databas".adresser_adress_id_seq'::regclass);
+
+
+--
+-- Name: anvandare id; Type: DEFAULT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".anvandare ALTER COLUMN id SET DEFAULT nextval('"Kzuki Databas".anvandare_anvandare_id_seq'::regclass);
+
+
+--
+-- Name: auktion (Annons) id; Type: DEFAULT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas"."auktion (Annons)" ALTER COLUMN id SET DEFAULT nextval('"Kzuki Databas"."Auktion (Annons)_auktion_id_seq"'::regclass);
+
+
+--
+-- Name: bilder id; Type: DEFAULT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".bilder ALTER COLUMN id SET DEFAULT nextval('"Kzuki Databas".bilder_id_seq'::regclass);
+
+
+--
+-- Name: bud id; Type: DEFAULT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".bud ALTER COLUMN id SET DEFAULT nextval('"Kzuki Databas".bud_bud_id_seq'::regclass);
+
+
+--
+-- Name: legenhet id; Type: DEFAULT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".legenhet ALTER COLUMN id SET DEFAULT nextval('"Kzuki Databas".legenhet_legenhet_id_seq'::regclass);
+
+
+--
+-- Name: objekt id; Type: DEFAULT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".objekt ALTER COLUMN id SET DEFAULT nextval('"Kzuki Databas".objekt_objekt_id_seq'::regclass);
+
+
+--
+-- Name: tomt id; Type: DEFAULT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".tomt ALTER COLUMN id SET DEFAULT nextval('"Kzuki Databas".tomt_tomt_id_seq'::regclass);
+
+
+--
+-- Name: villa id; Type: DEFAULT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".villa ALTER COLUMN id SET DEFAULT nextval('"Kzuki Databas".villa_villa_id_seq'::regclass);
+
+
+--
+-- Data for Name: admin; Type: TABLE DATA; Schema: Kzuki Databas; Owner: postgres
+--
+
+INSERT INTO "Kzuki Databas".admin (id, "förnamn", efternamn, email, telefon, adress) VALUES (1, 'Kazuki1', 'jkl', 'kzuki_1@gmail.com', '0563268965', 14);
+INSERT INTO "Kzuki Databas".admin (id, "förnamn", efternamn, email, telefon, adress) VALUES (4, 'Kazuki4', 'def', 'kzuki_4@gmail.com', '0225566889', 11);
+INSERT INTO "Kzuki Databas".admin (id, "förnamn", efternamn, email, telefon, adress) VALUES (5, 'Kazuki5', 'ghi', 'kzuki_5@gmail.com', '0758964123', 12);
+INSERT INTO "Kzuki Databas".admin (id, "förnamn", efternamn, email, telefon, adress) VALUES (2, 'Kazuki2', 'abc', 'kzuki_2@gmail.com', '0865486965', 13);
+INSERT INTO "Kzuki Databas".admin (id, "förnamn", efternamn, email, telefon, adress) VALUES (3, 'Kazuki3', 'mno', 'kzuki_3@gmail.com', '0236598635', 10);
+INSERT INTO "Kzuki Databas".admin (id, "förnamn", efternamn, email, telefon, adress) VALUES (11, 'Kazuki9', 'zåä', 'kzuki_9@gmail.com', '0593981382', 17);
+INSERT INTO "Kzuki Databas".admin (id, "förnamn", efternamn, email, telefon, adress) VALUES (9, 'Kazuki7', 'stu', 'kzuki_7@gmail.com', '0931805058', 19);
+INSERT INTO "Kzuki Databas".admin (id, "förnamn", efternamn, email, telefon, adress) VALUES (12, 'Kazuki10', 'åäö', 'kzuki_10@gmail.com', '0737943709', 16);
+INSERT INTO "Kzuki Databas".admin (id, "förnamn", efternamn, email, telefon, adress) VALUES (10, 'Kazuki8', 'vwy', 'kzuki_8@gmail.com', '0644692686', 18);
+INSERT INTO "Kzuki Databas".admin (id, "förnamn", efternamn, email, telefon, adress) VALUES (8, 'Kazuki6', 'pqr', 'kzuki_6@gmail.com', '0301780927
+', 20);
+
+
+--
+-- Data for Name: adresser; Type: TABLE DATA; Schema: Kzuki Databas; Owner: postgres
+--
+
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (27, 'Street 27', 'Norrköping', '88885');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (6, 'Street 6', 'Malmö', '96853');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (4, 'Street 4', 'Norrköping', '62568');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (82, 'Street 74', 'Norrköping', '65265');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (9, 'Street 9', 'Eskilstuna', '63526');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (3, 'Street 3', 'Malmö', '85684');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (8, 'Street 8', 'Norrköping', '65326');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (1, 'Street 1', 'Katrineholm', '12355');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (28, 'Street 28', 'Norrköping', '55562');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (2, 'Street 2', 'Stockholm', '95682');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (7, 'Street 7', 'Helsingborg', '86245');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (15, 'Street 15', 'Eskilstuna', '63529');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (17, 'Street 17', 'Helsingborg', '65963');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (18, 'Street 18', 'Örebro', '36962');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (19, 'Street 19', 'Örebro', '65942');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (20, 'Street 20', 'Linköping', '23657');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (21, 'Street 21', 'Västerås', '85652');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (22, 'Street 22', 'Katrineholm', '99999');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (23, 'Street 23', 'Katrineholm', '55554');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (25, 'Street 25', 'Eskilstuna', '33336');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (26, 'Street 26', 'Linköping', '55529');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (29, 'Street 29', 'Malmö', '33626');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (30, 'Street 30', 'Malmö', '565968');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (31, 'Street 31', 'Västerås', '66245');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (32, 'Street 32', 'Västerås', '88896');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (33, 'Street 33', 'Helsingborg', '22154');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (36, 'Street 36', 'Örebro', '89512');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (37, 'Street 37', 'Västerås', '56234');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (38, 'Street 38', 'Linköping', '86953');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (39, 'Street 39', 'Linköping', '96352');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (43, 'Street 43', 'Malmö', '96352');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (44, 'Street 44', 'Helsingborg', '65235');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (45, 'Street 45', 'Malmö', '52485');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (47, 'Street 47', 'Eskilstuna', '85633');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (51, 'Street 51', 'Eskilstuna', '96322');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (52, 'Street 52', 'Helsingborg', '52652');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (53, 'Street 53', 'Malmö', '63257');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (55, 'Street 55', 'Linköping', '96385');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (57, 'Street 57', 'Helsingborg', '52412');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (58, 'Street 58', 'Malmö', '63585');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (59, 'Street 59', 'Västerås', '36225');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (60, 'Street 60', 'Linköping', '65236');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (62, 'Street 62', 'Malmö', '63636');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (63, 'Street 63', 'Örebro', '63652');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (64, 'Street 64', 'Västerås', '96586');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (65, 'Street 65', 'Katrineholm', '21563');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (78, 'Street 70', 'Katrineholm', '25125');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (79, 'Street 71', 'Helsingborg', '52562');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (80, 'Street 72', 'Malmö', '85652');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (81, 'Street 73', 'Malmö', '62562');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (83, 'Street 75', 'Linköping', '63285');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (76, 'Street 68', 'Stockholm', '52551');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (42, 'Street 42', 'Stockholm', '85642');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (11, 'Street 11', 'Stockholm', '21536');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (5, 'Street 5', 'Stockholm', '75863');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (74, 'Street 66', 'Stockholm', '65862');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (34, 'Street 34', 'Stockholm', '75869');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (46, 'Street 46', 'Stockholm', '22135');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (10, 'Street 10', 'Stockholm', '21456');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (77, 'Street 69', 'Stockholm', '42152');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (75, 'Street 67', 'Stockholm', '62452');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (56, 'Street 56', 'Stockholm', '12365');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (35, 'Street 35', 'Stockholm', '36934');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (12, 'Street 12', 'Stockholm', '25698');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (13, 'Street 13', 'Stockholm', '63598');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (16, 'Street 16', 'Stockholm', '68956');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (14, 'Street 14', 'Stockholm', '85695');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (54, 'Street 54', 'Stockholm', '85362');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (41, 'Street 41', 'Stockholm', '85632');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (24, 'Street 24', 'Stockholm', '22256');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (50, 'Street 50', 'Norrköping', '85145');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (40, 'Street 40', 'Norrköping', '56463');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (61, 'Street 61', 'Norrköping', '63566');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (49, 'Street 49', 'Norrköping', '85932');
+INSERT INTO "Kzuki Databas".adresser (id, gatunamn, stad, postnummer) VALUES (48, 'Street 48', 'Norrköping', '22045');
+
+
+--
+-- Data for Name: anvandare; Type: TABLE DATA; Schema: Kzuki Databas; Owner: postgres
+--
+
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (4, 'user 4', 'pass4', 'jninjnu@gmail.com', '2023-07-01 11:37:52', 'Viktor', 'Karlsson', NULL, '0114455869', 2);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (1, 'user 1', 'pass1', 'abc@gmail.com', '2022-10-01 11:35:25', 'Adam', 'Larsson', NULL, '0123659865', 1);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (3, 'user 3', 'pass3', 'bfhasb@gmail.com', '2023-06-03 11:37:40', 'John', 'Eriksson', '012364548569', '0336655998', 9);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (7, 'user 6', 'pass6', 'dsfsf@gmail.com', '2024-01-11 10:46:06', 'Jemili', 'Gustafsson', NULL, '0114455865', 40);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (8, 'user 7', 'pass7', 'bsknlskdnd@gmail.com', '2022-10-11 10:46:16', 'Ash', 'Häggblom', NULL, '0632565474', 39);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (9, 'user 8', 'pass8', 'jiamwiwmw@gmail.com', '2022-10-11 10:46:20', 'Troy', 'Söderlund', '965862112365', '0201453214', 38);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (10, 'user 9', 'pass9', 'idnwekfn@gmail.com', '2021-10-11 10:46:23', 'Mila', 'Mattsson', NULL, '0852365425', 37);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (11, 'user 10', 'pass10', 'joknrfo@gmail.com', '2023-09-11 10:46:26', 'Karl', 'Lindholm', NULL, '0325486252', 36);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (12, 'user 11', 'pass11', 'pdkfokwsm@gmail.com', '2022-10-14 10:46:31', 'Malin', 'Svensson', NULL, '0851452145', 35);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (13, 'user 12', 'pass12', 'fdv1df51@gmail.com', '2023-07-16 10:46:39', 'Moll', 'Olsson', '965854126555', '0323231215', 34);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (14, 'user 13', 'pass13', 'dmfomnfko@gmail.com', '2018-07-11 10:46:48', 'Junas', 'Hellström', NULL, '0856321963', 33);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (15, 'user 14', 'pass14', 'iojeoifmklwr@gmail.com', '2022-07-11 10:46:58', 'Juno', 'Jansson', NULL, '0963651758', 32);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (16, 'user 15', 'pass15', 'kjnmklamdolw@gmail.com', '2021-10-14 10:47:02', 'Liam', 'Sjölund', NULL, '0256965214', 31);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (17, 'user 16', 'pass16', 'wedfknwkenmfoim@gmail.com', '2024-02-12 10:47:06', 'Tannaz', 'Danielsson', NULL, '0854562586', 30);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (18, 'user 17', 'pass17', 'klajnfkn@gmail.com', '2023-10-15 10:47:21', 'Hambus', 'Nordberg', '966332256658', '0965423125', 29);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (19, 'user 18', 'pass18', 'admkjbf216@gmail.com', '2023-10-18 10:47:26', 'Loy', 'Mattsson', NULL, '0521452522', 28);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (20, 'user 19', 'pass19', 'kjhdnaskfns64@gmail.com', '2021-10-11 10:47:32', 'Thomas', 'Eriksson', '855412254478', '0963855563', 27);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (21, 'user 20', 'pass20', 'kjdhfiwndfjkn@gmail.com', '2023-11-11 10:47:36', 'Victoria', 'Johansson', NULL, '0856396385', 26);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (22, 'user 21', 'pass21', 'wekdhweofj@gmail.com', '2024-06-11 10:47:42', 'Sam', 'Englund', NULL, '0895456213', 25);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (23, 'user 22', 'pass22', 'dfanjkwbnfjk@gmail.com', '2023-12-13 10:47:47', 'Sanue', 'Andresson', NULL, '0856325623', 24);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (24, 'user 23', 'pass23', 'cjakbjkbnk@gmail.com', '2022-12-16 10:48:04', 'Izabella', 'Wilhelms', '966575511224', '0857496321', 23);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (26, 'user 25', 'pass25', 'kcnskjfvnk@gmail.com', '2019-10-11 10:45:26', 'Sund', 'Brändö', '856544125896', '0125262565', 21);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (27, 'user 26', 'pass26', 'gfdgdssd@gmail.com', '2019-10-11 15:19:26', 'Åsa', 'Karlsson', NULL, '0854563958', 74);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (28, 'user 27', 'pass26', 'fsd952@gmail.com', '2019-10-11 15:19:35', 'Lisa', 'Eriksson', NULL, '0326526525', 75);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (29, 'user 28', 'pass27', 'afed9654@gmail.com', '2018-10-11 15:19:40', 'Kristin', 'Englund', NULL, '0898562232', 76);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (30, 'user 29', 'pass28', 'dwafsds@gmail.com', '2019-07-11 15:19:46', 'Anneli', 'Andresson', NULL, '0412514514', 77);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (31, 'user 30', 'pass29', 'vsdfddf5b25d15@gmail.com', '2019-06-13 15:19:51', 'Siv', 'Larsson', '452145245252', '0321414144', 78);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (32, 'user 31', 'pass30', 'dasc9525@gmail.com', '2017-08-11 15:20:01', 'Sofie', 'Olsson', NULL, '0541254574', 79);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (33, 'user 32', 'pass31', 'afdbxcsdsf9526@gmail.com', '2019-10-14 15:20:07', 'Emma', 'Bergman', NULL, '0754745544', 80);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (34, 'user 33', 'pass32', 'gsdfs85258@gmail.com', '2019-07-11 15:20:12', 'Ella', 'Wilhelms', NULL, '0852558555', 81);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (35, 'user 34', 'pass33', 'dscs952625@gmail.com', '2017-10-13 15:20:16', 'Olivia', 'Sjölund', NULL, '0321457474', 82);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (36, 'user 35', 'pass34', 'gfds84258@gmail.com', '2017-12-11 15:20:23', 'Ebba', 'Brändö', NULL, '0542542524', 83);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (5, 'user 2', 'pass2', 'qwfdw@gmail.com', '2022-05-02 11:37:59', 'Mila', 'Johansson', '963526895496', '0356655829', 6);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (2, 'user 5', 'pass5', 'dashb@gmail.com', '2021-06-01 11:37:29', 'Eva', 'Andresson', '', '0369856324', 8);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (25, 'user 24', 'abc@123456', 'john.larsson.swe@gmail.com.se', '2023-09-29 10:48:13', 'John', 'Larsson', NULL, '0728327639', 22);
+INSERT INTO "Kzuki Databas".anvandare (id, anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress) VALUES (37, 'user 40', 'abc@123', 'john.andresson@gmail.com.se', '2024-10-12 14:46:28.491277', 'John', 'Andresson', '02365325614', '0725638564', 30);
+
+
+--
+-- Data for Name: auktion (Annons); Type: TABLE DATA; Schema: Kzuki Databas; Owner: postgres
+--
+
+INSERT INTO "Kzuki Databas"."auktion (Annons)" (id, saljare_id, starttid, avslutat, status, startpris, objekt_typ, vinnare_id, anteckning, slutpris) VALUES (4, 1, '2023-05-01 11:44:20', '2023-05-03 11:44:31', 'avslutade', 850000, 'lägenhet', 4, NULL, 900000);
+INSERT INTO "Kzuki Databas"."auktion (Annons)" (id, saljare_id, starttid, avslutat, status, startpris, objekt_typ, vinnare_id, anteckning, slutpris) VALUES (11, 13, '2022-10-11 14:24:52', '2022-10-22 14:31:17', 'avslutade', 1850000, 'lägenhet', 27, NULL, 2100000);
+INSERT INTO "Kzuki Databas"."auktion (Annons)" (id, saljare_id, starttid, avslutat, status, startpris, objekt_typ, vinnare_id, anteckning, slutpris) VALUES (15, 17, '2022-07-11 14:25:54', '2022-07-20 14:32:14', 'avslutade', 2600000, 'lägenhet', 28, NULL, 2980000);
+INSERT INTO "Kzuki Databas"."auktion (Annons)" (id, saljare_id, starttid, avslutat, status, startpris, objekt_typ, vinnare_id, anteckning, slutpris) VALUES (7, 9, '2023-10-12 14:20:47', '2023-10-22 14:30:57', 'avslutade', 2500000, 'lägenhet', 21, NULL, 2800000);
+INSERT INTO "Kzuki Databas"."auktion (Annons)" (id, saljare_id, starttid, avslutat, status, startpris, objekt_typ, vinnare_id, anteckning, slutpris) VALUES (12, 14, '2023-07-11 14:25:21', '2023-07-21 14:31:47', 'avslutade', 970000, 'lägenhet', 32, NULL, 1300000);
+INSERT INTO "Kzuki Databas"."auktion (Annons)" (id, saljare_id, starttid, avslutat, status, startpris, objekt_typ, vinnare_id, anteckning, slutpris) VALUES (8, 10, '2024-10-11 14:23:33', '2024-10-31 15:48:46', 'pågående', 3000000, 'lägenhet', NULL, NULL, NULL);
+INSERT INTO "Kzuki Databas"."auktion (Annons)" (id, saljare_id, starttid, avslutat, status, startpris, objekt_typ, vinnare_id, anteckning, slutpris) VALUES (9, 11, '2024-11-14 14:23:45', '2024-12-04 15:48:55', 'kommande', 1800000, 'lägenhet', NULL, NULL, NULL);
+INSERT INTO "Kzuki Databas"."auktion (Annons)" (id, saljare_id, starttid, avslutat, status, startpris, objekt_typ, vinnare_id, anteckning, slutpris) VALUES (3, 1, '2024-10-01 11:43:47', '2024-10-20 15:48:13', 'pågående', 1000000, 'villa', NULL, NULL, NULL);
+INSERT INTO "Kzuki Databas"."auktion (Annons)" (id, saljare_id, starttid, avslutat, status, startpris, objekt_typ, vinnare_id, anteckning, slutpris) VALUES (14, 16, '2024-10-02 14:25:43', '2024-10-22 15:49:29', 'pågående', 1300000, 'tomt', NULL, NULL, NULL);
+INSERT INTO "Kzuki Databas"."auktion (Annons)" (id, saljare_id, starttid, avslutat, status, startpris, objekt_typ, vinnare_id, anteckning, slutpris) VALUES (6, 8, '2024-10-06 14:20:25', '2024-10-26 15:48:39', 'pågående', 980000, 'lägenhet', NULL, NULL, NULL);
+INSERT INTO "Kzuki Databas"."auktion (Annons)" (id, saljare_id, starttid, avslutat, status, startpris, objekt_typ, vinnare_id, anteckning, slutpris) VALUES (5, 7, '2024-10-03 14:19:44', '2024-10-23 15:48:28', 'pågående', 1200000, 'lägenhet', NULL, NULL, NULL);
+INSERT INTO "Kzuki Databas"."auktion (Annons)" (id, saljare_id, starttid, avslutat, status, startpris, objekt_typ, vinnare_id, anteckning, slutpris) VALUES (1, 2, '2023-10-01 11:43:21', '2023-10-04 11:43:26', 'avslutade', 900000, 'lägenhet', 5, NULL, 1050000);
+INSERT INTO "Kzuki Databas"."auktion (Annons)" (id, saljare_id, starttid, avslutat, status, startpris, objekt_typ, vinnare_id, anteckning, slutpris) VALUES (2, 2, '2024-07-01 11:43:31', '2024-07-06 11:43:41', 'avslutade', 600000, 'tomt', 27, NULL, 698000);
+INSERT INTO "Kzuki Databas"."auktion (Annons)" (id, saljare_id, starttid, avslutat, status, startpris, objekt_typ, vinnare_id, anteckning, slutpris) VALUES (10, 12, '2024-11-11 14:24:34', '2024-11-30 15:49:18', 'kommande', 2400000, 'lägenhet', NULL, NULL, NULL);
+INSERT INTO "Kzuki Databas"."auktion (Annons)" (id, saljare_id, starttid, avslutat, status, startpris, objekt_typ, vinnare_id, anteckning, slutpris) VALUES (13, 13, '2023-05-16 14:25:30', '2023-05-24 14:32:00', 'avslutade', 2200000, 'villa', 33, NULL, 2600000);
+
+
+--
+-- Data for Name: bilder; Type: TABLE DATA; Schema: Kzuki Databas; Owner: postgres
+--
+
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (59, 29, 'https://www.hemnet.se/bostad/villa-6rum-soderhamn-soderhamns-kommun-gravidevagen-1-21427589', 'https://www.hemnet.se/bostad/villa-6rum-torrlosa-svalovs-kommun-bjaragarden-1345-21382229');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (33, 16, 'https://www.hemnet.se/bostad/tomt-heden-bastads-kommun-blabarsslingan-10-20000996', 'https://www.hemnet.se/bostad/tomt-bollebygd-hultangen-bollebygds-kommun-exklusiva-tomter-till-salu-i-hultangen,-bollebygd-skapa-ditt-dromhem-20396679');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (31, 15, 'https://www.hemnet.se/bostad/tomt-hemavan-tarnaby-storumans-kommun-mosekalla-111-115-21365844', 'https://www.hemnet.se/bostad/tomt-glado-kvarn-huddinge-kommun-malms-vag-44-21422015');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (7, 3, 'https://www.hemnet.se/bostad/tomt-kyloren-norrbyn-umea-kommun-kyloren-21405611', 'https://www.hemnet.se/bostad/tomt-lerums-kommun-skallsjo-1-66-21425644');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (9, 4, 'https://www.hemnet.se/bostad/villa-5rum-odeshogs-kommun-omberg-gamla-skola-lararbostaden-1-21427656', 'https://www.hemnet.se/bostad/villa-4rum-edvinshem-ystads-kommun-kaparegatan-9-21427584');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (49, 24, 'https://www.hemnet.se/bostad/villa-5rum-timra-timra-kommun-tranvagen-10-21426969', 'https://www.hemnet.se/bostad/villa-5rum-margretelund-osterakers-kommun-kungsfagelvagen-20-21395188');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (41, 20, 'https://www.hemnet.se/bostad/tomt-torslanda-krossholmen-goteborgs-kommun-krossholmsvagen-32c-21368485', 'https://www.hemnet.se/bostad/tomt-aplared-boras-kommun-borasvagen-15a-21426451');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (55, 27, 'https://www.hemnet.se/bostad/villa-5rum-kolboda-kalmar-kommun-kolbodagatan-34c-21406416', 'https://www.hemnet.se/bostad/villa-7rum-gnarp-nordanstigs-kommun-ostergrangsjo-145-21427569');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (43, 21, 'https://www.hemnet.se/bostad/villa-5rum-degerfors-degerfors-kommun-karlskogavagen-18-21427242', 'https://www.hemnet.se/bostad/villa-5rum-hedentorp-kristianstads-kommun-astavagen-15-21427690');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (23, 11, 'https://www.hemnet.se/bostad/lagenhet-3rum-raby-vasteras-kommun-lovhagsgatan-13-21295384', 'https://www.hemnet.se/bostad/lagenhet-2rum-fosiedal-malmo-kommun-hyacintgatan-27-21424542');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (21, 10, 'https://www.hemnet.se/bostad/lagenhet-1rum-jakobsberg-jarfalla-kommun-manadsvagen-31-21427250', 'https://www.hemnet.se/bostad/lagenhet-2rum-centrala-hisingen-goteborgs-kommun-gullrisgatan-4d-21426483');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (57, 28, 'https://www.hemnet.se/bostad/villa-4rum-hokarangen-farsta-stockholms-kommun-kontoristvagen-43-21427555', 'https://www.hemnet.se/bostad/villa-5rum-skattkarr-karlstads-kommun-grasandsvagen-3-21374132');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (11, 5, 'https://www.hemnet.se/bostad/lagenhet-3rum-centrum-trollhattans-kommun-drottninggatan-46a-21427321', 'https://www.hemnet.se/bostad/lagenhet-2rum-alta-strandparken-nacka-kommun-stensovagen-18-21424655');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (5, 2, 'https://www.hemnet.se/bostad/lagenhet-4rum-huvudsta-solna-kommun-bygatan-15', 'https://www.hemnet.se/bostad/lagenhet-4rum-huvudsta-solna-kommun-bygatan-15,-2tr-21373302');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (53, 26, 'https://www.hemnet.se/bostad/villa-5rum-glomsta-huddinge-kommun-karolinerstigen-1a-21311797', 'https://www.hemnet.se/bostad/villa-8rum-nynashamns-kommun-badhusgatan-14-21408095');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (35, 17, 'https://www.hemnet.se/bostad/tomt-ronneby-kommun-aktervagen-6-19912498', 'https://www.hemnet.se/bostad/tomt-gnosjo-kommun-varbruksvagen-21426660');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (15, 7, 'https://www.hemnet.se/bostad/lagenhet-2rum-gotene-tatort-gotene-kommun-linnegatan-5d-21425275', 'https://www.hemnet.se/bostad/lagenhet-3rum-bagaregarden-goteborgs-kommun-landerigatan-2-c-21427413');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (37, 18, 'https://www.hemnet.se/bostad/tomt-fjatervalen-alvdalens-kommun-ljungstigen-120-20124157', 'https://www.hemnet.se/bostad/tomt-strangnas-strangnas-kommun-berg-27-21307107');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (3, 1, 'https://www.hemnet.se/bostad/lagenhet-2rum-hyllie-malmo-kommun-tors-grand-13-21390450', 'https://www.hemnet.se/bostad/lagenhet-1rum-enskede-stockholms-kommun-bastuhagsvagen-6-21427373');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (39, 19, 'https://www.hemnet.se/bostad/tomt-riala-allemora-norrtalje-kommun-allemoravagen-11-d-g-21310241', 'https://www.hemnet.se/bostad/tomt-ostra-gotland-gotlands-kommun-ostergarn-herrvik-188b-21328494');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (47, 23, 'https://www.hemnet.se/bostad/villa-4rum-centralt-eslovs-kommun-selarpsvagen-21-21427626', 'https://www.hemnet.se/bostad/villa-2rum-raa-helsingborgs-kommun-lidangsgatan-38-21040035');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (29, 14, 'https://www.hemnet.se/bostad/lagenhet-2rum-centrala-vasby-upplands-vasby-kommun-forsgrand-1-21426861', 'https://www.hemnet.se/bostad/lagenhet-2rum-jakobsberg-jarfalla-kommun-veckovagen-39-21426075');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (13, 6, 'https://www.hemnet.se/bostad/lagenhet-2rum-kongahalla-kungalvs-kommun-hansagatan-7-21416448', 'https://www.hemnet.se/bostad/lagenhet-3rum-vasastan-stockholms-kommun-vanadisplan-1,-1-tr-21427388');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (25, 12, 'https://www.hemnet.se/bostad/lagenhet-2rum-vastertorp-stockholms-kommun-skidskyttevagen-6-21403472', 'https://www.hemnet.se/bostad/lagenhet-3rum-rissne-sundbybergs-kommun-mjolnerbacken-64-21348949');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (19, 9, 'https://www.hemnet.se/bostad/lagenhet-4rum-sodermalm-stockholms-kommun-hornsgatan-178,-3tr-21427407', 'https://www.hemnet.se/bostad/lagenhet-1rum-sodermalm-stockholms-kommun-brannkyrkagatan-52,-2tr-21427379');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (51, 25, 'https://www.hemnet.se/bostad/villa-6rum-sundre-sodra-gotland-gotlands-kommun-sundre-vastergarde-152-21321075', 'https://www.hemnet.se/bostad/villa-7rum-sodra-gryta-vasteras-kommun-kronhjortsgatan-4-21402452');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (17, 8, 'https://www.hemnet.se/bostad/lagenhet-2rum-vasterslatt-umea-kommun-timotejvagen-10-21379445', 'https://www.hemnet.se/bostad/lagenhet-3rum-hantverkarbacken-sandvikens-kommun-hantverkarbacken-26a-20783635');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (27, 13, 'https://www.hemnet.se/bostad/lagenhet-2rum-lilla-essingen-stockholms-kommun-primusgatan-94', 'https://www.hemnet.se/bostad/lagenhet-3rum-johanneberg-almedal-goteborgs-kommun-ebbe-lieberathsgatan-16c-21427460');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (61, 30, 'https://www.hemnet.se/bostad/villa-5rum-fristad-boras-kommun-tamta-bryngelid-1-21405111', 'https://www.hemnet.se/bostad/villa-5rum-centrum-sala-kommun-brunnsgatan-39-21427514');
+INSERT INTO "Kzuki Databas".bilder (id, objekt_id, bild_1, bild_2) VALUES (45, 22, 'https://www.hemnet.se/bostad/villa-6rum-solvik-eskilstuna-kommun-solvik-6-21410409', 'https://www.hemnet.se/bostad/villa-4rum-skinnskattebergs-kommun-bernshammar-16a-21410656');
+
+
+--
+-- Data for Name: bud; Type: TABLE DATA; Schema: Kzuki Databas; Owner: postgres
+--
+
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (6, 1, 3, 975000, '2023-10-03 10:53:30');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (13, 1, 5, 105000, '2023-10-04 11:43:05');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (5, 1, 4, 970000, '2023-10-02 13:53:16');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (4, 1, 3, 950000, '2023-10-02 11:49:10');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (7, 2, 3, 680000, '2024-07-02 11:54:48');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (11, 4, 5, 870000, '2023-05-02 12:26:58');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (12, 4, 4, 900000, '2023-05-03 11:43:15');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (10, 3, 5, 1050000, '2024-10-01 11:57:39');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (9, 3, 4, 1030000, '2024-10-01 11:45:22');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (15, 5, 18, 1220000, '2024-10-03 15:37:58');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (16, 5, 19, 1250000, '2024-10-04 15:38:08');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (17, 5, 18, 1320000, '2024-10-06 15:38:15');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (18, 6, 19, 1000000, '2024-10-06 15:38:39');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (19, 6, 20, 1100000, '2024-10-08 15:38:47');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (20, 7, 21, 2550000, '2023-10-12 15:39:21');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (21, 7, 22, 2600000, '2023-10-13 15:39:28');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (22, 7, 23, 2680000, '2023-10-16 15:39:36');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (23, 7, 21, 2800000, '2023-10-22 15:39:45');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (24, 8, 24, 3050000, '2024-10-11 15:40:25');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (25, 8, 25, 3070000, '2024-10-11 16:40:33');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (26, 8, 26, 3100000, '2024-10-11 16:42:43');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (27, 11, 27, 1900000, '2022-10-11 15:41:19');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (29, 11, 29, 2000000, '2022-10-16 15:41:33');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (30, 11, 27, 2100000, '2022-10-22 14:31:17');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (31, 12, 30, 980000, '2023-07-11 15:42:51');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (32, 12, 31, 1000000, '2023-07-13 15:42:59');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (33, 12, 30, 1150000, '2023-07-14 15:43:08');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (34, 12, 31, 1200000, '2023-07-18 15:43:20');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (35, 12, 32, 1300000, '2023-07-21 15:43:27');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (36, 13, 33, 2300000, '2023-05-16 15:43:53');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (37, 13, 34, 2400000, '2023-05-17 15:44:00');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (38, 13, 33, 2600000, '2023-05-24 15:44:08');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (39, 14, 35, 1350000, '2024-10-02 15:44:43');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (40, 14, 36, 1400000, '2024-10-03 15:44:52');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (42, 15, 19, 2250000, '2022-07-11 15:47:09');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (43, 15, 20, 2300000, '2022-07-12 15:47:14');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (44, 15, 21, 2400000, '2022-07-13 15:47:19');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (45, 15, 30, 2450000, '2022-07-14 15:47:26');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (46, 15, 32, 2550000, '2022-07-20 15:47:40');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (47, 15, 28, 2600000, '2022-07-21 15:47:50');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (8, 2, 27, 698000, '2024-07-02 13:55:02');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (41, 14, 30, 1500000, '2024-10-11 15:45:46');
+INSERT INTO "Kzuki Databas".bud (id, auktion_id, budgivare_id, bud_belopp, bud_tid) VALUES (28, 11, 19, 1950000, '2022-10-12 15:41:27');
+
+
+--
+-- Data for Name: legenhet; Type: TABLE DATA; Schema: Kzuki Databas; Owner: postgres
+--
+
+INSERT INTO "Kzuki Databas".legenhet (id, manad_avgift, antal_rum, hiss, balkong, "våning", badkar, "byggnad_år", boarea, objekt_id) VALUES (4, 3000, 3, 1, 1, 2, 1, '1994-10-10', 90, 1);
+INSERT INTO "Kzuki Databas".legenhet (id, manad_avgift, antal_rum, hiss, balkong, "våning", badkar, "byggnad_år", boarea, objekt_id) VALUES (5, 2400, 2.5, 0, 1, 0, 0, '1986-10-01', 75, 2);
+INSERT INTO "Kzuki Databas".legenhet (id, manad_avgift, antal_rum, hiss, balkong, "våning", badkar, "byggnad_år", boarea, objekt_id) VALUES (8, 1800, 1, 0, 0, 1, 0, '1998-01-12', 50, 5);
+INSERT INTO "Kzuki Databas".legenhet (id, manad_avgift, antal_rum, hiss, balkong, "våning", badkar, "byggnad_år", boarea, objekt_id) VALUES (9, 3200, 3, 1, 1, 2, 1, '1999-02-02', 80, 6);
+INSERT INTO "Kzuki Databas".legenhet (id, manad_avgift, antal_rum, hiss, balkong, "våning", badkar, "byggnad_år", boarea, objekt_id) VALUES (10, 2800, 2, 1, 0, 3, 0, '2000-03-10', 45, 7);
+INSERT INTO "Kzuki Databas".legenhet (id, manad_avgift, antal_rum, hiss, balkong, "våning", badkar, "byggnad_år", boarea, objekt_id) VALUES (11, 3000, 3, 1, 1, 4, 1, '2001-08-10', 75, 8);
+INSERT INTO "Kzuki Databas".legenhet (id, manad_avgift, antal_rum, hiss, balkong, "våning", badkar, "byggnad_år", boarea, objekt_id) VALUES (12, 1800, 1.5, 0, 0, 5, 0, '2002-02-01', 35, 9);
+INSERT INTO "Kzuki Databas".legenhet (id, manad_avgift, antal_rum, hiss, balkong, "våning", badkar, "byggnad_år", boarea, objekt_id) VALUES (13, 1900, 2, 1, 0, 6, 0, '1994-01-18', 50, 10);
+INSERT INTO "Kzuki Databas".legenhet (id, manad_avgift, antal_rum, hiss, balkong, "våning", badkar, "byggnad_år", boarea, objekt_id) VALUES (14, 2500, 2, 1, 1, 2, 1, '1998-06-01', 55, 11);
+INSERT INTO "Kzuki Databas".legenhet (id, manad_avgift, antal_rum, hiss, balkong, "våning", badkar, "byggnad_år", boarea, objekt_id) VALUES (15, 3400, 2.5, 1, 1, 1, 1, '2000-01-17', 68, 12);
+INSERT INTO "Kzuki Databas".legenhet (id, manad_avgift, antal_rum, hiss, balkong, "våning", badkar, "byggnad_år", boarea, objekt_id) VALUES (16, 4000, 3, 1, 1, 3, 1, '2010-08-10', 89, 13);
+INSERT INTO "Kzuki Databas".legenhet (id, manad_avgift, antal_rum, hiss, balkong, "våning", badkar, "byggnad_år", boarea, objekt_id) VALUES (17, 4200, 3, 1, 1, 5, 1, '2011-02-09', 85, 14);
+
+
+--
+-- Data for Name: objekt; Type: TABLE DATA; Schema: Kzuki Databas; Owner: postgres
+--
+
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (17, NULL, 52);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (6, 5, 42);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (13, 11, 49);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (2, 4, 4);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (21, NULL, 56);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (25, NULL, 60);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (7, 9, 43);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (30, NULL, 65);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (11, 6, 47);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (3, 2, 5);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (20, NULL, 55);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (22, NULL, 57);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (15, 14, 50);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (16, NULL, 51);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (26, NULL, 61);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (12, 8, 48);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (14, 15, 15);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (8, 10, 44);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (19, NULL, 54);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (27, NULL, 62);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (29, NULL, 64);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (23, 13, 58);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (5, 7, 41);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (28, NULL, 63);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (9, NULL, 45);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (18, NULL, 53);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (4, 3, 7);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (24, NULL, 59);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (10, 12, 46);
+INSERT INTO "Kzuki Databas".objekt (id, auktion_id, adress_id) VALUES (1, 1, 3);
+
+
+--
+-- Data for Name: tomt; Type: TABLE DATA; Schema: Kzuki Databas; Owner: postgres
+--
+
+INSERT INTO "Kzuki Databas".tomt (id, manad_avgift, objekt_id) VALUES (1, 1500, 3);
+INSERT INTO "Kzuki Databas".tomt (id, manad_avgift, objekt_id) VALUES (2, 1800, 15);
+INSERT INTO "Kzuki Databas".tomt (id, manad_avgift, objekt_id) VALUES (3, 2200, 16);
+INSERT INTO "Kzuki Databas".tomt (id, manad_avgift, objekt_id) VALUES (4, 2400, 17);
+INSERT INTO "Kzuki Databas".tomt (id, manad_avgift, objekt_id) VALUES (5, 2500, 18);
+INSERT INTO "Kzuki Databas".tomt (id, manad_avgift, objekt_id) VALUES (6, 1900, 19);
+INSERT INTO "Kzuki Databas".tomt (id, manad_avgift, objekt_id) VALUES (7, 3000, 20);
+
+
+--
+-- Data for Name: villa; Type: TABLE DATA; Schema: Kzuki Databas; Owner: postgres
+--
+
+INSERT INTO "Kzuki Databas".villa (id, antal_rum, tomtarea, badkar, byggnad_ar, boarea, objekt_id) VALUES (2, 4, 450, 0, '1995-10-01', 120, 4);
+INSERT INTO "Kzuki Databas".villa (id, antal_rum, tomtarea, badkar, byggnad_ar, boarea, objekt_id) VALUES (3, 5, 560, 1, '1998-01-02', 220, 21);
+INSERT INTO "Kzuki Databas".villa (id, antal_rum, tomtarea, badkar, byggnad_ar, boarea, objekt_id) VALUES (4, 4, 400, 1, '1994-01-03', 180, 22);
+INSERT INTO "Kzuki Databas".villa (id, antal_rum, tomtarea, badkar, byggnad_ar, boarea, objekt_id) VALUES (5, 6, 389, 1, '1996-08-20', 150, 23);
+INSERT INTO "Kzuki Databas".villa (id, antal_rum, tomtarea, badkar, byggnad_ar, boarea, objekt_id) VALUES (6, 5, 580, 1, '1989-07-20', 280, 24);
+INSERT INTO "Kzuki Databas".villa (id, antal_rum, tomtarea, badkar, byggnad_ar, boarea, objekt_id) VALUES (7, 3, 650, 1, '1985-02-12', 220, 25);
+INSERT INTO "Kzuki Databas".villa (id, antal_rum, tomtarea, badkar, byggnad_ar, boarea, objekt_id) VALUES (8, 4, 800, 1, '1988-02-08', 190, 26);
+INSERT INTO "Kzuki Databas".villa (id, antal_rum, tomtarea, badkar, byggnad_ar, boarea, objekt_id) VALUES (9, 3, 180, 1, '1987-07-13', 92, 27);
+INSERT INTO "Kzuki Databas".villa (id, antal_rum, tomtarea, badkar, byggnad_ar, boarea, objekt_id) VALUES (10, 5, 280, 0, '1999-02-01', 130, 28);
+INSERT INTO "Kzuki Databas".villa (id, antal_rum, tomtarea, badkar, byggnad_ar, boarea, objekt_id) VALUES (11, 4, 540, 1, '1970-10-02', 110, 29);
+INSERT INTO "Kzuki Databas".villa (id, antal_rum, tomtarea, badkar, byggnad_ar, boarea, objekt_id) VALUES (12, 4, 585, 1, '1998-02-17', 180, 30);
+
+
+--
+-- Name: Auktion (Annons)_auktion_id_seq; Type: SEQUENCE SET; Schema: Kzuki Databas; Owner: postgres
+--
+
+SELECT pg_catalog.setval('"Kzuki Databas"."Auktion (Annons)_auktion_id_seq"', 15, true);
+
+
+--
+-- Name: admin_admin_id_seq; Type: SEQUENCE SET; Schema: Kzuki Databas; Owner: postgres
+--
+
+SELECT pg_catalog.setval('"Kzuki Databas".admin_admin_id_seq', 12, true);
+
+
+--
+-- Name: adresser_adress_id_seq; Type: SEQUENCE SET; Schema: Kzuki Databas; Owner: postgres
+--
+
+SELECT pg_catalog.setval('"Kzuki Databas".adresser_adress_id_seq', 83, true);
+
+
+--
+-- Name: anvandare_anvandare_id_seq; Type: SEQUENCE SET; Schema: Kzuki Databas; Owner: postgres
+--
+
+SELECT pg_catalog.setval('"Kzuki Databas".anvandare_anvandare_id_seq', 37, true);
+
+
+--
+-- Name: bilder_id_seq; Type: SEQUENCE SET; Schema: Kzuki Databas; Owner: postgres
+--
+
+SELECT pg_catalog.setval('"Kzuki Databas".bilder_id_seq', 62, true);
+
+
+--
+-- Name: bud_bud_id_seq; Type: SEQUENCE SET; Schema: Kzuki Databas; Owner: postgres
+--
+
+SELECT pg_catalog.setval('"Kzuki Databas".bud_bud_id_seq', 47, true);
+
+
+--
+-- Name: legenhet_legenhet_id_seq; Type: SEQUENCE SET; Schema: Kzuki Databas; Owner: postgres
+--
+
+SELECT pg_catalog.setval('"Kzuki Databas".legenhet_legenhet_id_seq', 17, true);
+
+
+--
+-- Name: objekt_objekt_id_seq; Type: SEQUENCE SET; Schema: Kzuki Databas; Owner: postgres
+--
+
+SELECT pg_catalog.setval('"Kzuki Databas".objekt_objekt_id_seq', 30, true);
+
+
+--
+-- Name: tomt_tomt_id_seq; Type: SEQUENCE SET; Schema: Kzuki Databas; Owner: postgres
+--
+
+SELECT pg_catalog.setval('"Kzuki Databas".tomt_tomt_id_seq', 7, true);
+
+
+--
+-- Name: villa_villa_id_seq; Type: SEQUENCE SET; Schema: Kzuki Databas; Owner: postgres
+--
+
+SELECT pg_catalog.setval('"Kzuki Databas".villa_villa_id_seq', 12, true);
+
+
+--
+-- Name: auktion (Annons) Auktion (Annons)_pk; Type: CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas"."auktion (Annons)"
+    ADD CONSTRAINT "Auktion (Annons)_pk" PRIMARY KEY (id);
+
+
+--
+-- Name: admin admin_pk; Type: CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".admin
+    ADD CONSTRAINT admin_pk PRIMARY KEY (id);
+
+
+--
+-- Name: adresser adresser_pk; Type: CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".adresser
+    ADD CONSTRAINT adresser_pk PRIMARY KEY (id);
+
+
+--
+-- Name: anvandare anvandare_pk; Type: CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".anvandare
+    ADD CONSTRAINT anvandare_pk PRIMARY KEY (id);
+
+
+--
+-- Name: bilder bilder_pk; Type: CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".bilder
+    ADD CONSTRAINT bilder_pk PRIMARY KEY (id);
+
+
+--
+-- Name: bud bud_pk; Type: CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".bud
+    ADD CONSTRAINT bud_pk PRIMARY KEY (id);
+
+
+--
+-- Name: legenhet legenhet_pk; Type: CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".legenhet
+    ADD CONSTRAINT legenhet_pk PRIMARY KEY (id);
+
+
+--
+-- Name: objekt objekt_pk; Type: CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".objekt
+    ADD CONSTRAINT objekt_pk PRIMARY KEY (id);
+
+
+--
+-- Name: tomt tomt_pk; Type: CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".tomt
+    ADD CONSTRAINT tomt_pk PRIMARY KEY (id);
+
+
+--
+-- Name: villa villa_pk; Type: CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".villa
+    ADD CONSTRAINT villa_pk PRIMARY KEY (id);
+
+
+--
+-- Name: auktion (Annons) Auktion (Annons)_Anvandare_anvandare_id_fk; Type: FK CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas"."auktion (Annons)"
+    ADD CONSTRAINT "Auktion (Annons)_Anvandare_anvandare_id_fk" FOREIGN KEY (vinnare_id) REFERENCES "Kzuki Databas".anvandare(id);
+
+
+--
+-- Name: auktion (Annons) Auktion (Annons)_Saljare_id_fk; Type: FK CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas"."auktion (Annons)"
+    ADD CONSTRAINT "Auktion (Annons)_Saljare_id_fk" FOREIGN KEY (saljare_id) REFERENCES "Kzuki Databas".anvandare(id);
+
+
+--
+-- Name: admin admin_adress_fk; Type: FK CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".admin
+    ADD CONSTRAINT admin_adress_fk FOREIGN KEY (adress) REFERENCES "Kzuki Databas".adresser(id);
+
+
+--
+-- Name: anvandare anvandare_adress_fk; Type: FK CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".anvandare
+    ADD CONSTRAINT anvandare_adress_fk FOREIGN KEY (adress) REFERENCES "Kzuki Databas".adresser(id);
+
+
+--
+-- Name: bilder bilder_objekt_fk; Type: FK CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".bilder
+    ADD CONSTRAINT bilder_objekt_fk FOREIGN KEY (objekt_id) REFERENCES "Kzuki Databas".objekt(id);
+
+
+--
+-- Name: bud bud_auktion_id_fk; Type: FK CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".bud
+    ADD CONSTRAINT bud_auktion_id_fk FOREIGN KEY (auktion_id) REFERENCES "Kzuki Databas"."auktion (Annons)"(id);
+
+
+--
+-- Name: bud bud_budgivare_id_fk; Type: FK CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".bud
+    ADD CONSTRAINT bud_budgivare_id_fk FOREIGN KEY (budgivare_id) REFERENCES "Kzuki Databas".anvandare(id);
+
+
+--
+-- Name: legenhet legenhet_objekt_id_fk; Type: FK CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".legenhet
+    ADD CONSTRAINT legenhet_objekt_id_fk FOREIGN KEY (objekt_id) REFERENCES "Kzuki Databas".objekt(id);
+
+
+--
+-- Name: objekt objekt_adress_fk; Type: FK CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".objekt
+    ADD CONSTRAINT objekt_adress_fk FOREIGN KEY (adress_id) REFERENCES "Kzuki Databas".adresser(id);
+
+
+--
+-- Name: objekt objekt_auktion_id_fk; Type: FK CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".objekt
+    ADD CONSTRAINT objekt_auktion_id_fk FOREIGN KEY (auktion_id) REFERENCES "Kzuki Databas"."auktion (Annons)"(id);
+
+
+--
+-- Name: tomt tomt_objekt_id_fk; Type: FK CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".tomt
+    ADD CONSTRAINT tomt_objekt_id_fk FOREIGN KEY (objekt_id) REFERENCES "Kzuki Databas".objekt(id);
+
+
+--
+-- Name: villa villa_objekt_id_fk; Type: FK CONSTRAINT; Schema: Kzuki Databas; Owner: postgres
+--
+
+ALTER TABLE ONLY "Kzuki Databas".villa
+    ADD CONSTRAINT villa_objekt_id_fk FOREIGN KEY (objekt_id) REFERENCES "Kzuki Databas".objekt(id);
+
+
+--
+-- PostgreSQL database dump complete
+--
+
