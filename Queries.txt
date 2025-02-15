@@ -1,0 +1,247 @@
+------------------------------------------------------------------------------------------------------------------------
+
+-- 1. Som användare vill jag kunna registrera mig och logga in.
+
+INSERT INTO anvandare (anvandarnamn, losenord, email, regis_datum, fornamn, efternamn, org_nummer, telefon, adress)
+VALUES ('user 40', 'abc@123','john.andresson@gmail.com.se',
+    NOW(),'John','Andresson', '02365325614',
+    '0725638564', 30);
+
+-- Användaren har lyckats registrera sig som user 40.
+
+------------------------------------------------------------------------------------------------------------------------
+
+-- 2. Som användare vill jag kunna se mina uppgifter.
+
+SELECT anv.id AS anvandare_id, anv.anvandarnamn, anv.losenord, anv.email, anv.regis_datum, anv.fornamn, anv.efternamn,
+anv.org_nummer, anv.telefon, adr.gatunamn, adr.stad, adr.postnummer
+FROM Anvandare anv
+JOIN Adresser adr ON anv.Adress = adr.id
+WHERE anv.id = 20;
+
+-- Resultatet sparas som View (anvandare_kan_se_sina_uppgifter) i datagrip.
+
+------------------------------------------------------------------------------------------------------------------------
+
+-- 3. Som användare vill jag kunna redigera mina personliga uppgifter.
+
+UPDATE anvandare
+SET
+losenord = 'abc@123456',
+email = 'john.larsson.swe@gmail.com.se',
+fornamn = 'John',
+efternamn = 'Larsson',
+telefon = '0728327639'
+WHERE id = 25;
+
+-- Användaren med id 25 har lyckats uppdatera sina uppgifter.
+
+------------------------------------------------------------------------------------------------------------------------
+
+-- 4. Som användare vill jag kunna se objekter som blivit sålda.
+
+SELECT o.id, a.objekt_typ, adr.stad, a.starttid, a.avslutat, a.startpris, a.slutpris, anv.anvandarnamn AS vinnare, bi.bild_1
+FROM objekt o
+JOIN "auktion (Annons)" a ON o.auktion_id = a.id
+JOIN adresser adr ON o.adress_id = adr.id
+JOIN anvandare anv ON a.vinnare_id = anv.id
+JOIN bilder bi ON o.id = bi.objekt_id
+WHERE a.status = 'avslutade'
+ORDER BY a.avslutat desc ;
+
+-- Resultatet sparas som View (anvandare_kan_se_salda_objekter) i datagrip.
+
+------------------------------------------------------------------------------------------------------------------------
+
+-- 5. Som användare vill jag kunna se alla auktioner jag vunnit.
+
+SELECT a.id AS auktion_id, o.id AS objekt_id, a.objekt_typ, adr.stad,
+a.starttid, a.avslutat, a.status, a.startpris, a.slutpris, bi.bild_1
+FROM "auktion (Annons)" a
+JOIN anvandare anv ON a.vinnare_id = anv.id
+JOIN adresser adr ON anv.adress = adr.id
+JOIN objekt o ON a.id = o.auktion_id
+JOIN bilder bi ON o.id = bi.objekt_id
+WHERE anv.id = 27;
+
+-- Resultatet sparas som View (anvandare_kan_se_alla_sina_vinnande_auktioner) i datagrip.
+
+------------------------------------------------------------------------------------------------------------------------
+
+-- 6. Som användare vill jag kunna se vem som vunnit en auktion.
+
+SELECT a.id AS auktion_id, anv.anvandarnamn AS vinnare
+FROM "auktion (Annons)" a
+JOIN anvandare anv ON a.vinnare_id = anv.id
+WHERE a.id = 1;
+
+-- Resultatet sparas som View (anvandare_kan_se_vem_ar_vinnare) i datagrip.
+
+-------------------------------------------------------------------------------------------------------------------------
+
+-- 7. Som användare vill jag kunna filtrera kommande auktioner.
+
+SELECT o.id, a.objekt_typ, a.status, adr.stad, a.starttid, a.avslutat, a.startpris, bi.bild_1
+FROM objekt o
+JOIN "auktion (Annons)" a ON o.auktion_id = a.id
+JOIN adresser adr ON o.adress_id = adr.id
+JOIN bilder bi ON o.id = bi.objekt_id
+WHERE a.status = 'kommande'
+ORDER BY a.starttid;
+
+-- Resultatet sparas som View (anvandare_filtrerar_kommande_auktioner) i datagrip.
+
+------------------------------------------------------------------------------------------------------------------------
+
+-- 8. Som säljare vill jag kunna se mina auktioner. 
+
+SELECT a.id AS auktion_id, anv.anvandarnamn AS vinnare, a.objekt_typ, a.status, adr.stad, a.starttid, a.avslutat, a.startpris, a.slutpris,
+COUNT(b.budgivare_id) AS antal_bud
+FROM "auktion (Annons)" a
+JOIN objekt o ON a.id = o.auktion_id
+JOIN adresser adr ON o.adress_id = adr.id
+JOIN bud b ON a.id = b.auktion_id
+JOIN anvandare anv ON a.vinnare_id = anv.id
+WHERE a.saljare_id = 2
+GROUP BY a.id, a.objekt_typ, a.status, adr.stad, a.starttid, a.avslutat, a.startpris, a.slutpris, anv.anvandarnamn ;
+
+-- Resultatet sparas som View (saljare_kan_se_sina_auktioner) i datagrip.
+
+------------------------------------------------------------------------------------------------------------------------
+
+-- 9. Som säljare vill jag kunna se statistik över mina avslutade auktioner, inklusive antal bud och slutpris.
+
+SELECT a.id AS auktion_id, a.starttid, a.avslutat, a.status, a.startpris, a.slutpris,
+COUNT(b.id) AS antal_bud
+FROM "auktion (Annons)" a
+LEFT JOIN bud b ON a.id = b.auktion_id
+JOIN anvandare anv ON a.saljare_id = anv.id
+WHERE anv.id = 13
+AND a.status = 'avslutade'
+GROUP BY a.id, a.starttid, a.avslutat, a.status, a.startpris, a.slutpris
+ORDER BY a.starttid DESC;
+
+-- Resultatet sparas som View (saljare_kan_se_statistik_avslutade_auktioner) i datagrip.
+
+------------------------------------------------------------------------------------------------------------------------
+
+-- 10. Som budgivare vill jag kunna filtrera alla auktoiner som säljer lägenheter med hiss i Stockholm och Norrkoping.
+
+SELECT o.id, a.objekt_typ, a.status, adr.gatunamn, adr.stad, adr.postnummer, a.starttid, a.avslutat, a.startpris, l.hiss, bi.bild_1
+FROM objekt o
+JOIN "auktion (Annons)" a ON o.auktion_id = a.id
+JOIN adresser adr ON o.adress_id = adr.id
+JOIN legenhet l ON o.id = l.objekt_id
+JOIN bilder bi ON o.id = bi.objekt_id
+WHERE a.status = 'pågående'
+AND a.objekt_typ = 'lägenhet'
+AND l.hiss = 1
+AND adr.stad IN ('Stockholm', 'Norrköping')
+ORDER BY a.starttid;
+
+-- Resultatet sparas som View (anvandare_filtrerar_lagenheter_med_hiss_i_stockholm_norrkoping) i datagrip.
+
+------------------------------------------------------------------------------------------------------------------------
+
+-- 11. Som budgivare vill jag kunna se budhistorik för en specifik auktion.
+
+SELECT a.id AS auktion_id, o.id AS objekt_id, a.objekt_typ, a.status,
+anv.anvandarnamn AS budgivare, b.bud_belopp, b.bud_tid
+ FROM objekt o
+ JOIN "auktion (Annons)" a ON o.auktion_id = a.id
+ JOIN bud b ON a.id = b.auktion_id
+ JOIN anvandare anv ON b.budgivare_id = anv.id
+ WHERE a.id = 3
+ ORDER BY b.bud_tid desc ;
+
+-- Resultatet sparas som View (budgivare_kan_se_budhistorik) i datagrip.
+
+------------------------------------------------------------------------------------------------------------------------
+
+-- 12. Som budgivare vill jag kunna se alla auktioner där jag har lagt bud.
+
+SELECT a.id AS auktion_id, a.objekt_typ, adr.stad, a.starttid, 
+a.avslutat, a.status, a.startpris, a.slutpris,
+COUNT(b.id) AS antal_bud
+FROM "auktion (Annons)" a
+JOIN bud b ON a.id = b.auktion_id
+JOIN anvandare anv ON b.budgivare_id = anv.id
+JOIN adresser adr ON anv.adress = adr.id
+WHERE anv.id = 20
+GROUP BY a.id, a.objekt_typ, adr.stad, a.starttid, a.avslutat, a.status, a.startpris, a.slutpris
+ORDER BY a.starttid DESC;
+
+-- Resultatet sparas som View (alla_auktioner_dar_budgiavare_lagt_bud) i datagrip.
+
+------------------------------------------------------------------------------------------------------------------------
+
+-- 13. Som budgivare vill jag se hur många bud jag har gjort på en specifikt auktion.
+
+SELECT a.id AS auktion_id, COUNT(b.id) AS min_antal_bud
+FROM bud b
+JOIN "auktion (Annons)" a ON b.auktion_id = a.id
+JOIN "auktion (Annons)" ON b.auktion_id = "auktion (Annons)".id
+WHERE b.auktion_id = 1
+AND budgivare_id = 5
+GROUP BY a.id ;
+
+-- Resultatet sparas som View (bugivare_kan_se_sin_antal_bud_på_en_auktion) i datagrip.
+
+------------------------------------------------------------------------------------------------------------------------
+
+-- 14. Som admin vill jag  kunna se användare som listor och detaljerat.
+
+SELECT anv.id AS anvandare_id, anv.anvandarnamn, anv.email,
+anv.regis_datum, anv.fornamn, anv.efternamn, anv.org_nummer, anv.telefon, adr.gatunamn, adr.stad, adr.postnummer
+FROM anvandare anv
+JOIN adresser adr ON anv.adress = adr.id
+ORDER BY anv.regis_datum DESC;
+
+-- Resultatet sparas som View (admin_kan_se_anvandarlistan_i_detalj) i datagrip.
+
+------------------------------------------------------------------------------------------------------------------------
+
+-- 15. Som admin vill jag kunna se alla auktioner och deras status oavsett säljare.
+
+SELECT a.id AS auktion_id, o.id AS objekt_id, a.objekt_typ,
+adr.stad, a.saljare_id, a.starttid, a.avslutat, a.status, a.startpris, a.slutpris
+FROM "auktion (Annons)" a
+JOIN objekt o ON a.id = o.auktion_id
+JOIN adresser adr ON o.adress_id = adr.id
+ORDER BY a.starttid DESC;
+
+-- Resultatet sparas som View (admin_kan_se_alla_auktioner_med_status) i datagrip.
+
+------------------------------------------------------------------------------------------------------------------------
+
+-- 16. Som admin vill jag kunna filtrera auktioner som har blivit avslutade utan vinnare.
+
+SELECT a.id AS auktion_id, o.id AS objekt_id,
+a.objekt_typ, adr.stad, a.saljare_id, a.starttid, a.avslutat, a.startpris, a.slutpris
+FROM "auktion (Annons)" a
+JOIN objekt o ON a.id = o.auktion_id
+JOIN adresser adr ON o.adress_id = adr.id
+WHERE a.status = 'avslutade'
+ORDER BY a.starttid DESC;
+
+-- Resultatet sparas som View (admin_kan_se_avslutande_auktioner_utan_vinnare) i datagrip.
+
+------------------------------------------------------------------------------------------------------------------------
+
+-- 17. Som användare vill jag kunna se alla auktioner jag deltagit i och jämföra mina bud med det vinnande budet.
+
+SELECT a.id AS auktion_id, a.objekt_typ, adr.stad, a.starttid, a.avslutat, anv.anvandarnamn AS vinnare,
+a.slutpris, b.bud_belopp AS mitt_bud
+FROM bud b
+JOIN "auktion (Annons)" a ON b.auktion_id = a.id
+JOIN objekt o ON a.id = o.auktion_id
+JOIN adresser adr ON o.adress_id = adr.id
+LEFT JOIN anvandare anv ON a.vinnare_id = anv.id
+WHERE b.budgivare_id = 19
+AND a.status = 'avslutade'
+GROUP BY a.id, a.objekt_typ, adr.stad, a.starttid, a.avslutat, anv.anvandarnamn, a.slutpris, b.bud_belopp
+ORDER BY a.starttid DESC;
+
+-- Resultatet sparas som View (anvandare_kan_jamfora_sina_bud_med_vinnare_bud) i datagrip.
+
+-------------------------------------------------------------------------------------------------------------------------
