@@ -21,12 +21,12 @@ Detta är ett system för online-auktioner av fastigheter, där användare snabb
 
 ## Innehåll i projektet
 Följande filer finns inkluderade i GitHub-repot:
-- **berättelser.doc** – Beskrivning av plattformen genom användarberättelser
-- **Databas/** – Mockdata för testning
-- **Queries.sql** – SQL-frågor för att hantera user stories
+- **Berättelser.pdf** – Beskrivning av plattformen genom användarberättelser
+- **Databas** – Mockdata för testning
+- **Queries.txt** – SQL-frågor för att hantera user stories
 - **Wireframe.png** – Illustrationer av systemets gränssnitt och användarflöden
-- **DDD_planering.png** – Bild av DDD-planering för projektet
-- **ER_Diagram.png** – Visuell representation av databasschemat
+- **DDD Planering.png** – Bild av DDD-planering för projektet
+- **ER Diagram.png** – Visuell representation av databasschemat
 
 ## Lärandemål
 Projektet omfattar flera lärandemål från kursen, bland annat:
