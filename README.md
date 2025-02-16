@@ -25,8 +25,8 @@ Följande filer finns inkluderade i GitHub-repot:
 - **Databas** – Mockdata för testning.
 - **Queries.txt** – SQL-frågor för att hantera user stories.
 - **Wireframe.png** – Illustrationer av systemets gränssnitt och användarflöden.
-- **DDD Planering.png** – Bild av DDD-planering för projektet.
-- **ER Diagram.png** – Visuell representation av databasschemat.
+- **DDD_Planering.png** – Bild av DDD-planering för projektet.
+- **ER_Diagram.png** – Visuell representation av databasschemat.
 
 ## Lärandemål
 Projektet omfattar flera lärandemål från kursen, bland annat:
