@@ -37,7 +37,7 @@ Projektet omfattar flera lärandemål från kursen, bland annat:
 - Modellering med ER-diagram
 
 ## Installation och Användning
-1. Klona detta repository: `git clone https://github.com/JohanTran94/Kazuki-Auktionsservice.git
+1. Klona detta repository: git clone https://github.com/JohanTran94/Kazuki-Auktionsservice.git
 2. Importera databasen till PostgreSQL
 3. Öppna och kör SQL-frågorna i DataGrip eller annan SQL-klient
 
